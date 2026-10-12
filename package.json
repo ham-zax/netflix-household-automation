@@ -1,0 +1,24 @@
+{
+  "name": "netflix-household-automation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Watches a Gmail inbox for Netflix household update emails and confirms them automatically with CloakBrowser",
+  "scripts": {
+    "start": "node src/listener.js",
+    "review": "node src/cli.js pending",
+    "test": "node --test",
+    "setup": "bash scripts/install.sh"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "cloakbrowser": "^0.6.2",
+    "dotenv": "^17.0.0",
+    "imapflow": "^1.0.0",
+    "mailparser": "^3.0.0",
+    "playwright-core": "^1.62.1"
+  }
+}
