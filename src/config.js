@@ -18,14 +18,18 @@ export function loadConfig({requireCredentials = true} = {}) {
     mailbox: process.env.GMAIL_MAILBOX || '[Gmail]/All Mail',
     maxAgeMinutes: Number(process.env.MAX_EMAIL_AGE_MINUTES || 15),
     pollSeconds: Number(process.env.POLL_INTERVAL_SECONDS || 60),
-    approvalMode: process.env.APPROVAL_MODE || 'review'
+    quickCheckSeconds: Number(process.env.QUICK_CHECK_SECONDS || 0),
+    approvalMode: process.env.APPROVAL_MODE || 'review',
+    approvalTransport: process.env.APPROVAL_TRANSPORT || 'browser'
   };
   if (requireCredentials && (!cfg.email || !cfg.password ||
     cfg.password === 'replace-with-new-app-password')) {
     throw new Error('Missing Gmail address/app password: set them in '+ CONFIG_PATH);
   }
   if (!['review','auto'].includes(cfg.approvalMode)) throw new Error('APPROVAL_MODE must be review or auto.');
+  if (!['browser','http-first'].includes(cfg.approvalTransport)) throw new Error('APPROVAL_TRANSPORT must be browser or http-first.');
   if (!(cfg.maxAgeMinutes > 0 && cfg.maxAgeMinutes <= 60)) throw new Error('Invalid MAX_EMAIL_AGE_MINUTES');
   if (!(cfg.pollSeconds >= 30 && cfg.pollSeconds <= 3600)) throw new Error('Invalid POLL_INTERVAL_SECONDS');
+  if (!(cfg.quickCheckSeconds === 0 || (cfg.quickCheckSeconds >= 1 && cfg.quickCheckSeconds <= 30))) throw new Error('Invalid QUICK_CHECK_SECONDS');
   return cfg;
 }

@@ -50,8 +50,10 @@ All settings live in `~/.config/oracle-gmail-listener/config.env` (see `.env.exa
 |---|---|
 | `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD` | Inbox to watch |
 | `APPROVAL_MODE` | `auto` confirms every request; `review` only queues them |
+| `APPROVAL_TRANSPORT` | `browser` (default) confirms in the headless browser; `http-first` sends the confirmation as a direct HTTP request and uses the browser only if that fails (experimental: built from one captured approval, not yet confirmed on a live request) |
 | `MAX_EMAIL_AGE_MINUTES` | Ignore older emails (links expire after about 15 minutes) |
 | `POLL_INTERVAL_SECONDS` | Fallback check interval |
+| `QUICK_CHECK_SECONDS` | `0` (default) relies on Gmail's push, which can lag by several seconds; `1`-`30` also asks Gmail for new mail that often |
 | `GMAIL_MAILBOX`, `NETFLIX_SENDER` | Rarely need changing |
 
 Emails that already existed when the service first started are never acted on.
@@ -65,7 +67,7 @@ npm run review                                          # requests still pending
 npm test
 ```
 
-Each request is recorded as `pending`, `approved` or `failed` in `~/.local/state/oracle-gmail-listener/state.json`.
+Each request is recorded as `pending`, `approved`, `failed` or `unconfirmed` (the HTTP request was sent, got no answer, and the link is now used up) in `~/.local/state/oracle-gmail-listener/state.json`.
 
 ## Limits
 

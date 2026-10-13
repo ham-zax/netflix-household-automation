@@ -4,6 +4,8 @@ import {loadConfig} from './config.js';
 import {readState, saveState, addRequest} from './state.js';
 import {extractHouseholdRequest} from './parse.js';
 import {approveHousehold} from './household-approve.js';
+import {approveHouseholdHttp,isLinkSpent} from './household-approve-http.js';
+import {approveWithFallback} from './approve-flow.js';
 
 const config = loadConfig();
 let stop=false;
@@ -56,22 +58,23 @@ async function synchronize(client) {
 }
 
 // Runs outside the mailbox lock: a browser run takes several seconds.
+// With APPROVAL_TRANSPORT=http-first a direct HTTP request is tried before the browser.
 async function autoApprove(ids) {
   for(const id of ids) {
     const state=readState();
     const request=state.pending.find(p=>p.id===id);
     if(!request || request.status!=='pending') continue;
-    let result=await approveHousehold(request.link);
-    if(!result.ok) {log(`Approval attempt failed for id=${id}: ${result.detail}. Retrying once.`);result=await approveHousehold(request.link);}
+    const result=await approveWithFallback(request.link,{id,httpFirst:config.approvalTransport==='http-first',
+      http:approveHouseholdHttp,browser:approveHousehold,isSpent:isLinkSpent,log});
     const fresh=readState();
     const entry=fresh.pending.find(p=>p.id===id);
     if(entry) {
-      entry.status=result.ok?'approved':'failed';
+      entry.status=result.status;
       entry.detail=result.detail;
-      if(result.ok) entry.approvedAt=new Date().toISOString();
+      if(result.status==='approved') entry.approvedAt=new Date().toISOString();
       saveState(fresh);
     }
-    log(`Household request id=${id} ${result.ok?'APPROVED':'FAILED'}: ${result.detail}`);
+    log(`Household request id=${id} ${result.status.toUpperCase()}: ${result.detail}`);
   }
 }
 
@@ -81,6 +84,9 @@ async function runConnection(){
     auth:{user:config.email,pass:config.password},
     logger:false,emitLogs:false,
     maxIdleTime:300000,
+    // The library's default leaves 15 s after every command in which no push can arrive.
+    autoIdleDelay:500,
+    disableAutoIdle:config.quickCheckSeconds>0,
     socketTimeout:10*60*1000
   });
   activeClient=client;
@@ -107,7 +113,13 @@ async function runConnection(){
     log('Connected to Gmail mailbox '+config.mailbox+' on '+config.email);
     await drain();
     while(!stop && client.usable) {
-      await wait(config.pollSeconds*1000);
+      // A NOOP makes Gmail report new mail at once (the 'exists' event); its push can lag.
+      const until=Date.now()+config.pollSeconds*1000;
+      while(config.quickCheckSeconds && !stop && client.usable && Date.now()<until) {
+        await wait(config.quickCheckSeconds*1000);
+        if(!stop && client.usable) await client.noop();
+      }
+      if(!config.quickCheckSeconds) await wait(config.pollSeconds*1000);
       if(!stop && client.usable) await drain();
     }
   } finally {
@@ -116,8 +128,8 @@ async function runConnection(){
     activeClient=null;
   }
 }
-process.on('SIGTERM',()=>{stop=true; void activeClient?.close().catch(()=>{});});
-process.on('SIGINT',()=>{stop=true; void activeClient?.close().catch(()=>{});});
+process.on('SIGTERM',()=>{stop=true; try {activeClient?.close();} catch {}});
+process.on('SIGINT',()=>{stop=true; try {activeClient?.close();} catch {}});
 log(config.approvalMode==='auto'
   ? 'Starting Gmail listener; AUTO mode: household update requests are approved automatically.'
   : 'Starting Gmail listener; review-only mode; no household changes can be automatically approved.');

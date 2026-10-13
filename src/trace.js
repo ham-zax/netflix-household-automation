@@ -7,9 +7,19 @@ import {STATE_DIR} from './config.js';
 
 const KINDS=['document','xhr','fetch'];
 const isNetflix=url=>{try {return new URL(url).hostname.endsWith('.netflix.com');} catch {return false;}};
+const enabled=()=>process.env.HOUSEHOLD_TRACE==='1';
+
+export function writeTrace(prefix,data) {
+ if(!enabled()) return;
+ try {
+  const dir=path.join(STATE_DIR,'traces');
+  fs.mkdirSync(dir,{recursive:true,mode:0o700});
+  fs.writeFileSync(path.join(dir,prefix+'-'+Date.now()+'.json'),JSON.stringify(data)+'\n',{mode:0o600});
+ } catch {}
+}
 
 export function startTrace(page) {
- if(process.env.HOUSEHOLD_TRACE!=='1') return null;
+ if(!enabled()) return null;
  const records=[],byRequest=new WeakMap(),bodies=[];
  page.on('request',request=>{
   if(!isNetflix(request.url()) || !KINDS.includes(request.resourceType())) return;
@@ -21,6 +31,10 @@ export function startTrace(page) {
   const rec=byRequest.get(response.request());
   if(!rec) return;
   rec.status=response.status();rec.responseHeaders=response.headers();
+  // headers() leaves out Set-Cookie; the raw list shows which response set which cookie.
+  bodies.push(response.headersArray().then(list=>{
+   rec.setCookieNames=list.filter(h=>h.name.toLowerCase()==='set-cookie').map(h=>h.value.split('=')[0]);
+  }).catch(()=>{}));
   bodies.push(response.body().then(buf=>{if(buf.byteLength<1_500_000) rec.responseBody=buf.toString('utf8');}).catch(()=>{}));
  });
  return {
@@ -28,9 +42,7 @@ export function startTrace(page) {
    try {
     await Promise.race([Promise.allSettled(bodies),new Promise(r=>setTimeout(r,5000))]);
     const cookies=await context.cookies().catch(()=>[]);
-    const dir=path.join(STATE_DIR,'traces');
-    fs.mkdirSync(dir,{recursive:true,mode:0o700});
-    fs.writeFileSync(path.join(dir,'approve-'+Date.now()+'.json'),JSON.stringify({requests:records,cookies})+'\n',{mode:0o600});
+    writeTrace('approve',{requests:records,cookies});
    } catch {}
   }
  };
