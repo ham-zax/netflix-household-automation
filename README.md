@@ -50,11 +50,12 @@ All settings live in `~/.config/oracle-gmail-listener/config.env` (see `.env.exa
 |---|---|
 | `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD` | Inbox to watch |
 | `APPROVAL_MODE` | `auto` confirms every request; `review` only queues them |
-| `APPROVAL_TRANSPORT` | `browser` (default) confirms in the headless browser; `http-first` sends the confirmation as a direct HTTP request and uses the browser only if that fails (experimental: built from one captured approval, not yet confirmed on a live request) |
+| `APPROVAL_TRANSPORT` | `browser` (default) confirms in the headless browser; `http-first` sends the confirmation as a direct HTTP request and uses the browser only if that fails (confirmed on live requests: about 1 s from mail to approval, no browser) |
 | `MAX_EMAIL_AGE_MINUTES` | Ignore older emails (links expire after about 15 minutes) |
 | `POLL_INTERVAL_SECONDS` | Fallback check interval |
 | `QUICK_CHECK_SECONDS` | `0` (default) relies on Gmail's push, which can lag by several seconds; `1`-`30` also asks Gmail for new mail that often |
-| `GMAIL_MAILBOX`, `NETFLIX_SENDER` | Rarely need changing |
+| `GMAIL_MAILBOX` | `[Gmail]/All Mail` (default) also sees mail that filters archived; `INBOX` can notice new mail sooner with `QUICK_CHECK_SECONDS` if Netflix mail stays in the inbox |
+| `NETFLIX_SENDER` | Rarely needs changing |
 
 Emails that already existed when the service first started are never acted on.
 

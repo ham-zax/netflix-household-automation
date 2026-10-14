@@ -5,3 +5,13 @@ node_modules/
 private/
 *.log
 .DS_Store
+
+# Private runtime data: never commit
+config.env
+*.bak*
+state.json
+trace-*.json
+http-*.json
+approve-*.json
+*.har
+*cookies*
