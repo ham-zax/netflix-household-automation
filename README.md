@@ -76,6 +76,13 @@ Each request is recorded as `pending`, `approved`, `failed` or `unconfirmed` (th
 - Every approval moves the household to the requesting location, so devices elsewhere may be asked to update next.
 - Netflix can change its emails or pages at any time; a failed approval shows up in the log with the page text it saw.
 
+## Optional German VPN
+
+The optional WireGuard service routes selected TVs through this server. It has
+separate on/off controls and does not stop the Gmail listener. See
+[VPN setup and router instructions](docs/vpn.md). VPN routing does not guarantee
+Netflix household acceptance.
+
 ## Privacy
 
 The config file holds your Gmail app password and the state file holds approval links; both are created with mode 600, live outside the repository, and must not be committed. Log lines never include links or tokens.
