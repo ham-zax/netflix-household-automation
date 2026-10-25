@@ -47,7 +47,7 @@ MTU = 1380
 PublicKey = $server_key
 PresharedKey = $preshared_key
 Endpoint = $endpoint:51820
-AllowedIPs = 0.0.0.0/0, ::/0
+AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 EOF
   cat >> "$config" <<EOF

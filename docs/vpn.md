@@ -57,10 +57,10 @@ The router screenshot confirms WireGuard under VPN Client.
 8. Add only your TV to the VPN device list. Other devices keep their usual route.
 9. Check that the router reports a connection and that the server records a handshake.
 
-The profile requests IPv4 and IPv6 default routes. The server supports IPv4
-egress only and drops IPv6 tunnel traffic. Check that the router imports both
-routes. If it ignores the IPv6 route, disable IPv6 for the TV or its network
-before relying on a common exit IP. DNS settings are included in the profile.
+The AX10 form rejects the combined IPv4/IPv6 Allowed IPs entry. Profiles use
+`AllowedIPs = 0.0.0.0/0` for IPv4 egress. Disable IPv6 for the TV or its network
+before relying on a common exit IP. The IPv4 tunnel does not capture direct
+IPv6 traffic. DNS settings are included in the profile.
 
 Give each friend their own profile: `friend1.conf` or `friend2.conf`. Do not reuse
 one profile at two homes. Each router must support a WireGuard VPN client.

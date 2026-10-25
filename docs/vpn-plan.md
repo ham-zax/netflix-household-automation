@@ -19,8 +19,9 @@ The existing Gmail listener is active as a user service.
    WireGuard. Store secrets under ignored `private/netflix-vpn/`, mode 700/600.
 3. Generate a systemd unit in that directory and link it into systemd. Use
    `wg-quick` with the repository's server configuration. Listen on UDP 51820.
-4. Use `10.77.0.0/24` for the tunnel. Clients route IPv4 and IPv6 into the
-   tunnel. Only IPv4 egress is supported. IPv6 traffic is intentionally dropped.
+4. Use `10.77.0.0/24` for the tunnel. Profiles route IPv4 into the tunnel.
+   The AX10 rejects the combined IPv4/IPv6 entry. Disable IPv6 for the TV or its
+   network to prevent direct IPv6 traffic. The server supports IPv4 egress only.
 5. Enable IPv4 forwarding when starting. Add only scoped input, forwarding and
    NAT rules. Block clients from host services, private destinations and peers.
    Remove the owned rules when stopping. Leave global IPv4 forwarding enabled
