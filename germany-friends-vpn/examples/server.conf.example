@@ -1,0 +1,27 @@
+# Documentation only. The installer generates the actual private configuration.
+# Replace REPOSITORY with the absolute repository path.
+[Interface]
+PrivateKey = REPLACE_WITH_SERVER_PRIVATE_KEY
+Address = 10.77.0.1/24
+ListenPort = 51820
+MTU = 1380
+PostUp = "REPOSITORY/scripts/netflix-vpn-firewall.sh" up %i
+PostDown = "REPOSITORY/scripts/netflix-vpn-firewall.sh" down %i
+
+# home
+[Peer]
+PublicKey = REPLACE_WITH_HOME_PUBLIC_KEY
+PresharedKey = REPLACE_WITH_HOME_PRESHARED_KEY
+AllowedIPs = 10.77.0.2/32
+
+# friend1
+[Peer]
+PublicKey = REPLACE_WITH_FRIEND1_PUBLIC_KEY
+PresharedKey = REPLACE_WITH_FRIEND1_PRESHARED_KEY
+AllowedIPs = 10.77.0.3/32
+
+# friend2
+[Peer]
+PublicKey = REPLACE_WITH_FRIEND2_PUBLIC_KEY
+PresharedKey = REPLACE_WITH_FRIEND2_PRESHARED_KEY
+AllowedIPs = 10.77.0.4/32

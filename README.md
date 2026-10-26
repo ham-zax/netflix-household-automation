@@ -83,6 +83,10 @@ separate on/off controls and does not stop the Gmail listener. See
 [VPN setup and router instructions](docs/vpn.md). VPN routing does not guarantee
 Netflix household acceptance.
 
+The [Germany and friends folder](germany-friends-vpn/README.md) collects the
+discussion record, setup decisions, configuration examples and local links to
+all three private profiles.
+
 ## Privacy
 
 The config file holds your Gmail app password and the state file holds approval links; both are created with mode 600, live outside the repository, and must not be committed. Log lines never include links or tokens.
