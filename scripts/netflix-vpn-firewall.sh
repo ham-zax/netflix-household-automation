@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Own only the NFVPN chains and their jumps. Preserve the host's existing rules.
+# The subnet and port are read from the live interface, so any tunnel name works.
 set -euo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 [[ $EUID == 0 ]] || { echo 'Run through netflix-vpn.sh as root.' >&2; exit 1; }
 action=${1:-}
 interface=${2:-}
-[[ $interface == wg-netflix ]] || { echo 'Unexpected VPN interface.' >&2; exit 1; }
-subnet=10.77.0.0/24
-port=51820
+case "$action" in
+  up|down) ;;
+  *) echo "Usage: $(basename "$0") up|down INTERFACE" >&2; exit 2 ;;
+esac
+[[ $interface =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]] || { echo 'Unexpected VPN interface.' >&2; exit 1; }
 
 remove_chain() {
   local table=$1 parent=$2 chain=$3
@@ -26,11 +29,17 @@ cleanup() {
   remove_chain nat POSTROUTING NFVPN_NAT
 }
 
-case "$action" in
-  down) cleanup; exit 0 ;;
-  up) ;;
-  *) echo 'Usage: netflix-vpn-firewall.sh up|down wg-netflix' >&2; exit 2 ;;
-esac
+if [[ $action == down ]]; then
+  cleanup
+  exit 0
+fi
+
+subnet=$(ip -4 route show dev "$interface" scope link 2>/dev/null |
+  awk '/proto kernel/ {print $1; exit}')
+port=$(wg show "$interface" listen-port 2>/dev/null || true)
+[[ $subnet =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$ ]] ||
+  { echo 'Cannot read the tunnel subnet.' >&2; exit 1; }
+[[ $port =~ ^[0-9]{1,5}$ ]] || { echo 'Cannot read the tunnel port.' >&2; exit 1; }
 
 uplink=$(ip -4 route get 1.1.1.1 | awk '{for(i=1;i<=NF;i++) if($i=="dev") {print $(i+1); exit}}')
 [[ -n $uplink && $uplink != "$interface" ]] || { echo 'No usable uplink.' >&2; exit 1; }

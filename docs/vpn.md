@@ -95,17 +95,50 @@ destinations, block peer-to-peer traffic and block access to server services.
 Stopping removes those chains. It leaves global IPv4 forwarding enabled to avoid
 disrupting any other forwarding consumers. No persistent sysctl file is created.
 
-Install on a fresh server with:
+## Install on another server
+
+The scripts are portable. Interface name, subnet, port, unit name and the initial
+client list are options, so one server can be an Australian exit and another a
+German exit without editing code.
 
 ```bash
 scripts/netflix-vpn.sh install YOUR_PUBLIC_IPV4_OR_HOSTNAME
 ```
 
-The install command refuses to overwrite an existing configuration. Keep this
-checkout at its current path because the service uses absolute repository paths.
+Options:
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--interface NAME` | `wg-netflix` | WireGuard interface, 15 characters maximum |
+| `--subnet CIDR` | `10.77.0.0/24` | Tunnel subnet. `/24` only |
+| `--port PORT` | `51820` | UDP listen port |
+| `--unit NAME` | `netflix-vpn.service` | systemd unit file name |
+| `--clients "A B"` | `home friend1 friend2` | Profiles to create at install |
+
+Settings are stored in `private/netflix-vpn/settings`, so `on`, `off`, `status`
+and `add-client` need no repeated flags. The firewall helper reads the subnet and
+port from the live interface, so it works with any tunnel name.
+
+Example, an Australian exit on a second server:
+
+```bash
+scripts/netflix-vpn.sh install 54.252.229.131 --subnet 10.88.0.0/24 --clients home
+```
+
+Remove it with `scripts/netflix-vpn.sh uninstall`. That stops the service, removes
+the unit link and the firewall rules, and keeps the keys. Add `--purge` to delete
+the keys and profiles too.
+
+The install command refuses to overwrite an existing configuration, refuses a
+subnet that is already routed, and refuses an existing unit name. Keep each
+checkout at its install path because the unit uses absolute repository paths.
+
+Each server needs its own cloud ingress rule for the UDP port. A server also needs
+`wireguard-tools` and `iptables`, which the installer adds when missing.
+
 Both homes' internet connections and the server carry the streams. Server egress
-can consume a cloud traffic allowance. The cloud account's allowance and billing
-were not checked during this setup.
+can consume a cloud traffic allowance. Check each cloud account's allowance and
+billing separately.
 
 References: [WireGuard quick start](https://www.wireguard.com/quickstart/) and
 [TP-Link VPN Client guide](https://www.tp-link.com/us/support/faq/3135/).
